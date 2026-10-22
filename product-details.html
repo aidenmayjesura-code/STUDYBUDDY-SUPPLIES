@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details | StudyBuddy Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <section class="section">
+    <div class="container">
+      <a href="shop.html" class="btn btn-outline btn-small" style="margin-bottom:20px;display:inline-block;">&#8592; Back to Shop</a>
+
+      <div class="product-detail">
+        <div class="product-detail-image">
+          <img id="detail-image" src="" alt="" class="detail-image"
+            onerror="this.onerror=null;this.src='https://placehold.co/600x600/fde2e8/5b4b6a?text=Image'">
+        </div>
+        <div class="product-detail-info">
+          <h1 id="detail-name">Product Name</h1>
+          <p id="detail-description" style="color:var(--muted);margin-bottom:16px;">Description.</p>
+          <div class="detail-stock" id="detail-stock">In stock</div>
+          <div class="detail-price">
+            Price: <span id="detail-price">₱0.00</span>
+          </div>
+
+          <!-- Color options -->
+          <div class="options-group" id="color-group" style="display:none;">
+            <label class="options-label">Color</label>
+            <div class="color-swatches" id="color-swatches"></div>
+          </div>
+
+          <!-- Size / package options -->
+          <div class="options-group" id="size-group" style="display:none;">
+            <label class="options-label">Size / Package</label>
+            <div class="size-buttons" id="size-buttons"></div>
+          </div>
+
+          <!-- Quantity -->
+          <div class="options-group" id="qty-group">
+            <label class="options-label">Quantity</label>
+            <div class="qty-selector">
+              <button type="button" onclick="changeDetailQty(-1)">&#8722;</button>
+              <input type="number" id="detail-qty" value="1" min="1" max="1">
+              <button type="button" onclick="changeDetailQty(1)">&#43;</button>
+            </div>
+            <div class="detail-stock-limit" id="detail-stock-limit" style="font-size:0.8rem;color:var(--muted);margin-top:4px;"></div>
+          </div>
+
+          <button class="btn btn-primary detail-add-btn" id="detail-add-btn" style="width:100%;margin-top:14px;padding:14px;font-size:1rem;">
+            Add to Cart
+          </button>
+          <div id="detail-toast" class="detail-toast"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="site-footer"></div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Redirect to login if not logged in
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+    }
+
+    renderHeader();
+    renderFooter();
+    initMobileMenu();
+    updateCartBadge();
+
+    const params = new URLSearchParams(location.search);
+    const productId = params.get('id');
+    const product = getProduct(productId);
+
+    if (!product) {
+      document.body.innerHTML = '<div class="container" style="text-align:center;padding:60px 20px;"><h2>Product not found.</h2><a href="shop.html" class="btn btn-primary">Back to Shop</a></div>';
+      return;
+    }
+
+    // State
+    let selectedColor = null;
+    let selectedSize = null;
+    let currentPrice = product.price;
+
+    const detailImage = document.getElementById('detail-image');
+    const detailName = document.getElementById('detail-name');
+    const detailDescription = document.getElementById('detail-description');
+    const detailStock = document.getElementById('detail-stock');
+    const detailPrice = document.getElementById('detail-price');
+    const detailQty = document.getElementById('detail-qty');
+    const detailStockLimit = document.getElementById('detail-stock-limit');
+    const detailAddBtn = document.getElementById('detail-add-btn');
+    const detailToast = document.getElementById('detail-toast');
+    const colorGroup = document.getElementById('color-group');
+    const colorSwatches = document.getElementById('color-swatches');
+    const sizeGroup = document.getElementById('size-group');
+    const sizeButtons = document.getElementById('size-buttons');
+    const qtyGroup = document.getElementById('qty-group');
+
+    // Render product
+    detailImage.src = resolveImagePath(product.image);
+    detailImage.alt = product.name;
+    detailName.textContent = product.name;
+    detailDescription.textContent = product.description || '';
+    detailStock.textContent = `In stock: ${product.stock}`;
+    detailPrice.textContent = formatPrice(product.price);
+    detailQty.max = product.stock;
+    detailStockLimit.textContent = `Maximum available: ${product.stock}`;
+
+    // Colors
+    const variants = product.variants || { colors: null, sizes: null };
+    if (variants.colors && variants.colors.length) {
+      colorGroup.style.display = 'block';
+      variants.colors.forEach(color => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'color-swatch';
+        btn.style.backgroundColor = colorToHex(color);
+        btn.setAttribute('aria-label', color);
+        btn.onclick = () => selectColor(color);
+        colorSwatches.appendChild(btn);
+      });
+      selectedColor = variants.colors[0];
+      updateColorSelection();
+    }
+
+    // Sizes
+    if (variants.sizes && variants.sizes.length) {
+      sizeGroup.style.display = 'block';
+      variants.sizes.forEach((sz, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'size-btn';
+        btn.textContent = `${sz.label}  ${formatPrice(sz.price)}`;
+        btn.onclick = () => selectSize(idx);
+        sizeButtons.appendChild(btn);
+      });
+      selectedSize = variants.sizes[0];
+      currentPrice = variants.sizes[0].price;
+      updateSizeSelection();
+    }
+
+    function colorToHex(name) {
+      const map = {
+        'Pink': '#f8c3cd', 'Blue': '#a2d2ff', 'Purple': '#d8b4fe',
+        'Green': '#a8e6cf', 'Yellow': '#fde047', 'Black': '#3a2e4a',
+        'Mint Green': '#a8e6cf', 'Red': '#fcc4cc'
+      };
+      return map[name] || '#e9dff0';
+    }
+
+    function selectColor(color) {
+      selectedColor = color;
+      updateColorSelection();
+    }
+
+    function updateColorSelection() {
+      const swatches = colorSwatches.querySelectorAll('.color-swatch');
+      swatches.forEach((sw, idx) => {
+        if (variants.colors[idx] === selectedColor) {
+          sw.classList.add('selected');
+          sw.style.boxShadow = '0 0 0 3px var(--pink)';
+        } else {
+          sw.classList.remove('selected');
+          sw.style.boxShadow = '';
+        }
+      });
+    }
+
+    function selectSize(idx) {
+      selectedSize = variants.sizes[idx];
+      currentPrice = selectedSize.price;
+      detailPrice.textContent = formatPrice(currentPrice);
+      updateSizeSelection();
+    }
+
+    function updateSizeSelection() {
+      const btns = sizeButtons.querySelectorAll('.size-btn');
+      btns.forEach((btn, idx) => {
+        if (variants.sizes[idx] === selectedSize) {
+          btn.classList.add('selected');
+        } else {
+          btn.classList.remove('selected');
+        }
+      });
+    }
+
+    window.changeDetailQty = function(delta) {
+      let val = parseInt(detailQty.value) || 1;
+      val = Math.max(1, Math.min(product.stock, val + delta));
+      detailQty.value = val;
+    };
+
+    detailQty.addEventListener('input', function() {
+      let val = parseInt(this.value) || 1;
+      if (val > product.stock) val = product.stock;
+      if (val < 1) val = 1;
+      this.value = val;
+    });
+
+    detailAddBtn.addEventListener('click', function() {
+      const qty = parseInt(detailQty.value) || 1;
+      const sizeLabel = selectedSize ? selectedSize.label : null;
+      const result = addToCart(productId, qty, selectedColor, sizeLabel, currentPrice);
+      if (result.ok) {
+        showToast(result.message);
+        updateCartBadge();
+        detailAddBtn.textContent = 'Added!';
+        detailAddBtn.style.background = '#a8e6cf';
+        detailAddBtn.style.color = '#2d5a47';
+        setTimeout(() => {
+          detailAddBtn.textContent = 'Add to Cart';
+          detailAddBtn.style.background = '';
+          detailAddBtn.style.color = '';
+        }, 1200);
+      } else {
+        showToast(result.message, 'error');
+      }
+    });
+
+    function showToast(message, type = 'success') {
+      detailToast.textContent = message;
+      detailToast.className = 'detail-toast show ' + type;
+      setTimeout(() => { detailToast.classList.remove('show'); }, 3000);
+    }
+  </script>
+</body>
+</html>

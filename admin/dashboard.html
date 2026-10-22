@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | StudyBuddy Supplies Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="admin-sidebar"></div>
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1>Dashboard</h1>
+        <div style="font-size:0.85rem;color:var(--muted);">Welcome back, admin</div>
+      </header>
+      <div class="admin-content">
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Recent Orders</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-orders"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/products.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    // Admin login guard
+    if (!isLoggedIn() || !isAdmin()) {
+      location.href = '../login.html';
+    }
+
+    renderAdminSidebar();
+
+    function renderStats() {
+      const products = getProducts();
+      const orders = getOrders();
+      const pending = getPendingOrders().length;
+      const completed = getCompletedOrders().length;
+      const lowStock = getLowStockProducts().length;
+      const totalSales = getTotalSales();
+      const grid = document.getElementById('stat-grid');
+      grid.innerHTML = [
+        adminStatCard('Total Products', products.length, 'var(--pink)'),
+        adminStatCard('Total Orders', orders.length, 'var(--lavender)'),
+        adminStatCard('Pending Orders', pending, 'var(--yellow)'),
+        adminStatCard('Completed Orders', completed, 'var(--mint)'),
+        adminStatCard('Low Stock Products', lowStock, 'var(--blue)'),
+        adminStatCard('Total Sales', formatPrice(totalSales), 'var(--pink)')
+      ].join('');
+    }
+
+    function renderRecentOrders() {
+      const orders = getOrders().slice(0, 8);
+      const tbody = document.getElementById('recent-orders');
+      if (orders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">No orders yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = orders.map(o => `
+        <td><strong>#${o.number.slice(-6)}</strong><br><small style="color:var(--muted);">${formatOrderDate(o.date)}</small></td>
+        <td>${o.customer ? o.customer.name : 'Unknown'}</td>
+        <td><strong>${formatPrice(o.total)}</strong></td>
+        <td><span class="status-badge status-${o.status.replace(/\s+/g,'-')}">${o.status}</span></td>
+      `).join('');
+    }
+
+    renderStats();
+    renderRecentOrders();
+  </script>
+</body>
+</html>

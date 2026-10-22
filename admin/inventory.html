@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory | StudyBuddy Supplies Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="admin-sidebar"></div>
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1>Inventory</h1>
+      </header>
+      <div class="admin-content">
+        <div class="stat-grid" id="inventory-stats" style="margin-bottom:24px;"></div>
+        <div style="margin-bottom:14px;color:var(--muted);font-size:0.9rem;">
+          Low stock threshold: <strong id="low-stock-threshold"></strong> units or fewer. Update stock quantities below.
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price (₱)</th>
+                <th>Current Stock</th>
+                <th>Update Stock</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/products.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    // Admin login guard
+    if (!isLoggedIn() || !isAdmin()) {
+      location.href = '../login.html';
+    }
+
+    renderAdminSidebar();
+
+    function renderStats() {
+      const products = getProducts();
+      const lowStock = getLowStockProducts().length;
+      const outOfStock = getOutOfStockProducts().length;
+      const totalValue = getTotalStockValue();
+      document.getElementById('inventory-stats').innerHTML = [
+        adminStatCard('Total Products', products.length, 'var(--pink)'),
+        adminStatCard('Low Stock', lowStock, 'var(--blue)'),
+        adminStatCard('Out of Stock', outOfStock, 'var(--pink)'),
+        adminStatCard('Stock Value', formatPrice(totalValue), 'var(--mint)')
+      ].join('');
+    }
+
+    function renderInventory() {
+      const products = getProducts();
+      const tbody = document.getElementById('inventory-table');
+      tbody.innerHTML = products.map(p => {
+        const out = p.stock <= 0;
+        const low = p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD;
+        return `
+          <tr>
+            <td>
+              <img src="${resolveImagePath(p.image)}" alt="${p.name}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;background:#f3e8ff;"
+                onerror="this.onerror=null;this.src='https://placehold.co/36x36/fde2e8/5b4b6a?text=Img'">
+            </td>
+            <td><strong>${p.name}</strong></td>
+            <td>${(CATEGORIES.find(c => c.id === p.category) || {name:p.category}).name}</td>
+            <td>${formatPrice(p.price)}</td>
+            <td><strong>${p.stock}</strong></td>
+            <td>
+              <input type="number" id="inv-stock-${p.id}" value="${p.stock}" min="0" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:8px;">
+              <button class="btn-action btn-edit" onclick="updateInvStock('${p.id}')" style="margin-left:6px;padding:6px 10px;font-size:0.85rem;">Set</button>
+            </td>
+            <td>
+              ${out ? '<span class="out-of-stock-badge">Out of Stock</span>' : ''}
+              ${low ? '<span class="low-stock-badge">Low Stock</span>' : ''}
+              {!out && !low ? 'OK' : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.updateInvStock = function(id) {
+      const p = getProduct(id);
+      if (!p) return;
+      const input = document.getElementById('inv-stock-'+id);
+      const val = Math.floor(Number(input.value));
+      if (!Number.isFinite(val) || val < 0) {
+        toast('Enter a valid non-negative number.', 'error');
+        return;
+      }
+      try {
+        updateProduct(id, { stock: val });
+        toast(`${p.name} stock set to ${val}.`, 'success');
+        renderStats();
+        renderInventory();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    };
+
+    renderStats();
+    document.getElementById('low-stock-threshold').textContent = LOW_STOCK_THRESHOLD;
+    renderInventory();
+  </script>
+</body>
+</html>

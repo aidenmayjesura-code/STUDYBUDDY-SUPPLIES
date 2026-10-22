@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | StudyBuddy Supplies Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="admin-sidebar"></div>
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1>Settings</h1>
+      </header>
+      <div class="admin-content">
+        <div class="admin-form">
+          <h3>About</h3>
+          <p>StudyBuddy Supplies — School Supplies Ordering System (Admin Panel)</p>
+          <p>This is a frontend-only demonstration. All data (products, stock, orders) is stored in your browser's localStorage.</p>
+        </div>
+
+        <div class="admin-form" style="margin-top:24px;">
+          <h3>Data Management</h3>
+          <p>Reset all sample data to defaults. This clears products, stock, and orders from browser storage.</p>
+          <div class="actions" style="margin-top:12px;">
+            <button class="btn btn-outline" onclick="resetData()">Reset to Default Data</button>
+            <button class="btn btn-delete" onclick="clearAllData()">Clear All Data</button>
+          </div>
+        </div>
+
+        <div class="admin-form" style="margin-top:24px;">
+          <h3>Important Notes</h3>
+          <ul style="color:var(--text);margin-top:8px;line-height:1.8;">
+            <li>localStorage only works in a single browser — it does not sync across devices or users.</li>
+            <li>There is no secure admin login; this is a frontend demonstration only.</li>
+            <li>Real multi-user ordering and shared inventory require a backend and database.</li>
+            <li>Do not store real customer data here; it is saved locally in the browser.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/products.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    // Admin login guard
+    if (!isLoggedIn() || !isAdmin()) {
+      location.href = '../login.html';
+    }
+
+    renderAdminSidebar();
+
+    window.resetData = function() {
+      if (!confirm('Reset all products, stock, and orders to default sample data? This cannot be undone.')) return;
+      localStorage.removeItem('studyBuddy_products');
+      localStorage.removeItem('studyBuddy_orders');
+      localStorage.removeItem('studyBuddy_cart');
+      localStorage.removeItem('studyBuddy_lastOrder');
+      location.reload();
+    };
+
+    window.clearAllData = function() {
+      if (!confirm('Clear ALL data including products, stock, orders, and cart? This cannot be undone.')) return;
+      localStorage.clear();
+      location.reload();
+    };
+  </script>
+</body>
+</html>

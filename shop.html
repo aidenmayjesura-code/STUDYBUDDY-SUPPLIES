@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop | StudyBuddy Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">All Products</h2>
+      <p class="section-subtitle">Browse our school supplies collection</p>
+
+      <div class="category-filters" id="category-filters"></div>
+
+      <div class="product-grid" id="product-grid"></div>
+      <p id="no-results" style="text-align:center;color:var(--muted);display:none;">No products found in this category.</p>
+    </div>
+  </section>
+
+  <div id="site-footer"></div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Redirect to login if not logged in
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+    }
+
+    renderHeader();
+    renderFooter();
+    initMobileMenu();
+    updateCartBadge();
+
+    const productGrid = document.getElementById('product-grid');
+    const categoryFilters = document.getElementById('category-filters');
+    const noResults = document.getElementById('no-results');
+
+    const params = new URLSearchParams(location.search);
+    const activeCat = params.get('cat') || 'all';
+
+    function colorToHex(name) {
+      const map = {
+        'Pink': '#f8c3cd', 'Blue': '#a2d2ff', 'Purple': '#d8b4fe',
+        'Green': '#a8e6cf', 'Yellow': '#fde047', 'Black': '#3a2e4a',
+        'Mint Green': '#a8e6cf', 'Red': '#fcc4cc'
+      };
+      return map[name] || '#e9dff0';
+    }
+
+    function renderProducts(filter) {
+      const items = getProductsByCategory(filter);
+      productGrid.innerHTML = items.map(p => {
+        const variants = p.variants || { colors: null, sizes: null };
+        const hasColors = variants.colors && variants.colors.length;
+        const hasSizes = variants.sizes && variants.sizes.length;
+        const defaultSize = hasSizes ? variants.sizes[0] : null;
+        const defaultPrice = defaultSize ? defaultSize.price : p.price;
+        const sizeId = `size-${p.id}`;
+        const colorId = `color-${p.id}`;
+        const qtyId = `qty-${p.id}`;
+        const priceId = `price-${p.id}`;
+        const stockId = `stock-${p.id}`;
+
+        return `
+          <article class="product-card">
+            <img src="${resolveImagePath(p.image)}" alt="${p.name}" class="product-image"
+              onerror="this.onerror=null;this.src='https://placehold.co/400x400/fde2e8/5b4b6a?text=${encodeURIComponent(p.name)}'">
+            <div class="product-name">${p.name}</div>
+            <div class="product-price" id="${priceId}">${formatPrice(defaultPrice)}</div>
+            <div class="product-stock" id="${stockId}">In stock: ${p.stock}</div>
+
+            ${hasColors ? `
+              <div class="options-group">
+                <label class="options-label">Color</label>
+                <div class="color-swatches" id="${colorId}">
+                  ${variants.colors.map(c => `
+                    <button type="button" class="color-swatch${variants.colors.indexOf(c) === 0 ? ' selected' : ''}"
+                      style="background-color:${colorToHex(c)}" onclick="selectColor('${p.id}', '${c}')" aria-label="${c}"></button>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${hasSizes ? `
+              <div class="options-group">
+                <label class="options-label">Size / Package</label>
+                <div class="size-buttons" id="${sizeId}">
+                  ${variants.sizes.map((s, i) => `
+                    <button type="button" class="size-btn${i === 0 ? ' selected' : ''}"
+                      onclick="selectSize('${p.id}', ${i})">${s.label} ${formatPrice(s.price)}</button>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="options-group">
+              <label class="options-label">Quantity</label>
+              <div class="qty-selector">
+                <button type="button" onclick="changeShopQty('${p.id}', -1)">&#8722;</button>
+                <input type="number" id="${qtyId}" value="1" min="1" max="${p.stock}">
+                <button type="button" onclick="changeShopQty('${p.id}', 1)">&#43;</button>
+              </div>
+            </div>
+
+            <div class="shop-actions">
+              <button class="btn add-to-cart" onclick="addToCartFromShop('${p.id}')">Add to Cart</button>
+              <button class="btn order-now" onclick="orderNowFromShop('${p.id}')">Order Now</button>
+            </div>
+            <div class="shop-toast shop-toast-${p.id}" style="display:none;"></div>
+          </article>
+        `;
+      }).join('');
+      noResults.style.display = items.length ? 'none' : 'block';
+    }
+
+    // Track selected variant per product
+    const shopSelection = {};
+
+    window.selectColor = function(pid, color) {
+      if (!shopSelection[pid]) shopSelection[pid] = { color: null, size: null };
+      shopSelection[pid].color = color;
+      const swatches = document.querySelectorAll(`#color-${pid} .color-swatch`);
+      swatches.forEach((sw, idx) => {
+        // find color by order
+      });
+      // re-render selection state handled by CSS class toggle
+      swatches.forEach(sw => sw.classList.remove('selected'));
+      // find the swatch with matching aria-label
+      document.querySelectorAll(`#color-${pid} .color-swatch`).forEach(sw => {
+        if (sw.getAttribute('aria-label') === color) sw.classList.add('selected');
+      });
+    };
+
+    window.selectSize = function(pid, index) {
+      const product = getProduct(pid);
+      if (!product) return;
+      const variants = product.variants || { colors: null, sizes: null };
+      const size = variants.sizes[index];
+      if (!size) return;
+      if (!shopSelection[pid]) shopSelection[pid] = { color: null, size: null };
+      shopSelection[pid].size = size.label;
+      const priceEl = document.getElementById(`price-${pid}`);
+      if (priceEl) priceEl.textContent = formatPrice(size.price);
+      document.querySelectorAll(`#size-${pid} .size-btn`).forEach((btn, i) => {
+        btn.classList.toggle('selected', i === index);
+      });
+    };
+
+    window.changeShopQty = function(pid, delta) {
+      const input = document.getElementById(`qty-${pid}`);
+      const product = getProduct(pid);
+      if (!input || !product) return;
+      let val = parseInt(input.value) || 1;
+      val = Math.max(1, Math.min(product.stock, val + delta));
+      input.value = val;
+    };
+
+    window.addToCartFromShop = function(pid) {
+      const product = getProduct(pid);
+      if (!product) return;
+      const qtyInput = document.getElementById(`qty-${pid}`);
+      const qty = parseInt(qtyInput.value) || 1;
+      const sel = shopSelection[pid] || { color: null, size: null };
+      const sizeLabel = sel.size || (product.variants && product.variants.sizes && product.variants.sizes[0] ? product.variants.sizes[0].label : null);
+      const color = sel.color || null;
+
+      // Determine unit price based on selected size
+      let unitPrice = product.price;
+      if (product.variants && product.variants.sizes) {
+        const matched = product.variants.sizes.find(s => s.label === sizeLabel);
+        if (matched) unitPrice = matched.price;
+      }
+
+      if (qty > product.stock) {
+        showShopToast(pid, `Only ${product.stock} ${product.name}(s) available.`, 'error');
+        return;
+      }
+
+      const result = addToCart(pid, qty, color, sizeLabel, unitPrice);
+      if (result.ok) {
+        showShopToast(pid, `${product.name} added to cart.`, 'success');
+        updateCartBadge();
+      } else {
+        showShopToast(pid, result.message, 'error');
+      }
+    };
+
+    window.orderNowFromShop = function(pid) {
+      const product = getProduct(pid);
+      if (!product) return;
+      const qtyInput = document.getElementById(`qty-${pid}`);
+      const qty = parseInt(qtyInput.value) || 1;
+      const sel = shopSelection[pid] || { color: null, size: null };
+      const sizeLabel = sel.size || (product.variants && product.variants.sizes && product.variants.sizes[0] ? product.variants.sizes[0].label : null);
+      const color = sel.color || null;
+
+      // Determine unit price based on selected size
+      let unitPrice = product.price;
+      if (product.variants && product.variants.sizes) {
+        const matched = product.variants.sizes.find(s => s.label === sizeLabel);
+        if (matched) unitPrice = matched.price;
+      }
+
+      // Validate stock
+      if (qty > product.stock) {
+        showShopToast(pid, `Only ${product.stock} ${product.name}(s) available.`, 'error');
+        return;
+      }
+
+      // Add to existing cart then go straight to checkout
+      const result = addToCart(pid, qty, color, sizeLabel, unitPrice);
+      if (result.ok) {
+        updateCartBadge();
+        location.href = 'checkout.html';
+      } else {
+        showShopToast(pid, result.message, 'error');
+      }
+    };
+
+    function showShopToast(pid, message, type) {
+      const toast = document.querySelector(`.shop-toast-${pid}`);
+      if (!toast) return;
+      toast.textContent = message;
+      toast.style.display = 'block';
+      toast.style.background = type === 'success' ? '#d1fae5' : '#fde2e8';
+      toast.style.color = type === 'success' ? '#2d5a47' : '#c94f6b';
+      toast.style.padding = '6px 10px';
+      toast.style.borderRadius = '8px';
+      toast.style.fontSize = '0.85rem';
+      toast.style.marginTop = '8px';
+      toast.style.textAlign = 'center';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    categoryFilters.innerHTML = CATEGORIES.map(c => `
+      <button class="filter-btn ${c.id === activeCat ? 'active' : ''}" onclick="location.href='shop.html?cat=${c.id}'">${c.name}</button>
+    `).join('');
+
+    renderProducts(activeCat);
+  </script>
+</body>
+</html>

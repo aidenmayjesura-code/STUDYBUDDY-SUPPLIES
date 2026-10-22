@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products | StudyBuddy Supplies Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="admin-sidebar"></div>
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1>Manage Products</h1>
+        <a href="#" class="btn btn-primary" style="padding:8px 16px;font-size:0.9rem;" onclick="return toggleForm()">Add Product</a>
+      </header>
+      <div class="admin-content">
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="product-table"></tbody>
+          </table>
+        </div>
+
+        <div class="admin-form" id="product-form" style="display:none;margin-top:24px;">
+          <h3 id="form-title">Add New Product</h3>
+          <form id="product-form-el">
+            <input type="hidden" id="edit-id">
+            <div class="form-group">
+              <label>Product Name <span style="color:#c94f6b;">*</span></label>
+              <input type="text" id="p-name" required>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="p-category"></select>
+            </div>
+            <div class="form-group">
+              <label>Price (₱) <span style="color:#c94f6b;">*</span></label>
+              <input type="number" id="p-price" min="0" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label>Available Stock <span style="color:#c94f6b;">*</span></label>
+              <input type="number" id="p-stock" min="0" required>
+            </div>
+            <div class="form-group">
+              <label>Image Path</label>
+              <input type="text" id="p-image" placeholder="images/notebook.jpg">
+              <div class="field-hint">Relative path, e.g. images/notebook.jpg. Place files in the images/ folder.</div>
+            </div>
+            <div class="image-preview" id="image-preview"></div>
+            <div class="actions" style="margin-top:18px;">
+              <button type="submit" class="btn btn-primary">Save Product</button>
+              <button type="button" class="btn btn-outline" onclick="return toggleForm()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/products.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    // Admin login guard
+    if (!isLoggedIn() || !isAdmin()) {
+      location.href = '../login.html';
+    }
+
+    renderAdminSidebar();
+
+    const formEl = document.getElementById('product-form-el');
+    const formBox = document.getElementById('product-form');
+    const formTitle = document.getElementById('form-title');
+    const editId = document.getElementById('edit-id');
+    const pName = document.getElementById('p-name');
+    const pCategory = document.getElementById('p-category');
+    const pPrice = document.getElementById('p-price');
+    const pStock = document.getElementById('p-stock');
+    const pImage = document.getElementById('p-image');
+    const imagePreview = document.getElementById('image-preview');
+
+    // populate category select
+    pCategory.innerHTML = CATEGORIES.filter(c => c.id !== 'all').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+    function renderProducts() {
+      const tbody = document.getElementById('product-table');
+      const list = getProducts();
+      tbody.innerHTML = list.map(p => {
+        const low = p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD;
+        const out = p.stock <= 0;
+        return `
+          <tr>
+            <td>
+              <img src="${resolveImagePath(p.image)}" alt="${p.name}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;background:#f3e8ff;"
+                onerror="this.onerror=null;this.src='https://placehold.co/40x40/fde2e8/5b4b6a?text=Img'">
+            </td>
+            <td><strong>${p.name}</strong></td>
+            <td>${(CATEGORIES.find(c => c.id === p.category) || {name:p.category}).name}</td>
+            <td>${formatPrice(p.price)}</td>
+            <td>
+              ${out ? '<span class="out-of-stock-badge">Out of Stock</span>' : ''}
+              ${low ? '<span class="low-stock-badge">Low Stock</span>' : ''}
+              ${!out && !low ? p.stock : ''}
+            </td>
+            <td>
+              <button class="btn-action btn-edit" onclick="editProduct('${p.id}')">Edit</button>
+              <button class="btn-action btn-delete" onclick="deleteProductUI('${p.id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.toggleForm = function() {
+      const showing = formBox.style.display !== 'none';
+      formBox.style.display = showing ? 'none' : 'block';
+      if (!showing) {
+        formTitle.textContent = 'Add New Product';
+        editId.value = '';
+        formEl.reset();
+        imagePreview.innerHTML = '';
+      }
+      return false;
+    };
+
+    pImage.addEventListener('input', function() {
+      const src = this.value || '';
+      if (!src) {
+        imagePreview.innerHTML = '';
+        return;
+      }
+      const img = document.createElement('img');
+      img.alt = 'preview';
+      img.style.cssText = 'width:90px;height:90px;border-radius:10px;border:1px solid var(--border);background:#f3e8ff;object-fit:cover;';
+      img.onerror = function() {
+        this.style.display = 'none';
+        imagePreview.innerHTML = '<div class="placeholder" style="width:90px;height:90px;border-radius:10px;background:#e9dff0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.8rem;">No preview</div>';
+      };
+      img.src = src;
+      imagePreview.innerHTML = '';
+      imagePreview.appendChild(img);
+    });
+
+    window.editProduct = function(id) {
+      const p = getProduct(id);
+      if (!p) return;
+      editId.value = p.id;
+      pName.value = p.name;
+      pCategory.value = p.category;
+      pPrice.value = p.price;
+      pStock.value = p.stock;
+      pImage.value = p.image;
+      formTitle.textContent = 'Edit Product';
+      formBox.style.display = 'block';
+      imagePreview.innerHTML = `<img src="${resolveImagePath(p.image)}" alt="preview" onerror="this.onerror=null;this.style.display='none';">`;
+    };
+
+    window.deleteProductUI = function(id) {
+      const p = getProduct(id);
+      if (!p) return;
+      if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+      try {
+        deleteProduct(id);
+        toast('Product deleted.', 'success');
+        renderProducts();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    };
+
+    formEl.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const product = {
+        id: editId.value || undefined,
+        name: pName.value,
+        category: pCategory.value,
+        price: pPrice.value,
+        stock: pStock.value,
+        image: pImage.value || 'images/placeholder.jpg'
+      };
+      try {
+        if (editId.value) {
+          updateProduct(editId.value, product);
+          toast('Product updated.', 'success');
+        } else {
+          addProduct(product);
+          toast('Product added.', 'success');
+        }
+        toggleForm();
+        renderProducts();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    });
+
+    renderProducts();
+  </script>
+</body>
+</html>

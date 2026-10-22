@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | StudyBuddy Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo">StudyBuddy<span>Supplies</span></div>
+        <h2 id="login-title">Customer Login</h2>
+        <p id="login-subtitle">Welcome back to your school supplies shop.</p>
+      </div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label for="login-username">Username or Email <span style="color:#c94f6b;">*</span></label>
+          <input type="text" id="login-username" name="username" placeholder="Enter your username" required>
+          <small class="error-msg" id="username-error">Please enter your username.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Password <span style="color:#c94f6b;">*</span></label>
+          <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
+          <small class="error-msg" id="password-error">Please enter your password.</small>
+        </div>
+
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; color:var(--text-dark);">
+            <input type="checkbox" id="login-as-admin"> Admin Login
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="login-btn" style="width:100%; margin-top:10px;">Login</button>
+      </form>
+
+      <div id="login-toast" class="login-toast"></div>
+
+      <div class="login-footer">
+        <p>Frontend demo — sessions saved in browser only.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    const form = document.getElementById('login-form');
+    const usernameInput = document.getElementById('login-username');
+    const passwordInput = document.getElementById('login-password');
+    const adminCheckbox = document.getElementById('login-as-admin');
+    const loginTitle = document.getElementById('login-title');
+    const loginSubtitle = document.getElementById('login-subtitle');
+    const loginBtn = document.getElementById('login-btn');
+    const loginToast = document.getElementById('login-toast');
+
+    // Already logged in? Redirect accordingly.
+    if (typeof isLoggedIn === 'function' && isLoggedIn()) {
+      const user = getCurrentUser();
+      if (user && user.role === 'admin') {
+        location.href = 'admin/dashboard.html';
+      } else {
+        location.href = 'index.html';
+      }
+    }
+
+    function toggleLoginMode() {
+      if (adminCheckbox.checked) {
+        loginTitle.textContent = 'Admin Login';
+        loginSubtitle.textContent = 'Administrator access to the dashboard.';
+      } else {
+        loginTitle.textContent = 'Customer Login';
+        loginSubtitle.textContent = 'Welcome back to your school supplies shop.';
+      }
+    }
+
+    adminCheckbox.addEventListener('change', toggleLoginMode);
+
+    function showToast(message, type = 'error') {
+      loginToast.textContent = message;
+      loginToast.className = 'login-toast show ' + type;
+      setTimeout(() => { loginToast.classList.remove('show'); }, 3500);
+    }
+
+    function showError(id, show) {
+      const el = document.getElementById(id);
+      const input = document.getElementById(id.replace('-error', ''));
+      if (!el) return;
+      el.style.display = show ? 'block' : 'none';
+      if (input) input.style.borderColor = show ? '#c94f6b' : '';
+    }
+
+    function validate() {
+      let valid = true;
+      if (!usernameInput.value.trim()) {
+        showError('username-error', true);
+        valid = false;
+      } else {
+        showError('username-error', false);
+      }
+      if (!passwordInput.value.trim()) {
+        showError('password-error', true);
+        valid = false;
+      } else {
+        showError('password-error', false);
+      }
+      return valid;
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!validate()) return;
+
+      loginBtn.textContent = 'Logging in...';
+      loginBtn.disabled = true;
+
+      setTimeout(() => {
+        const isAdminLogin = adminCheckbox.checked;
+        const result = login(usernameInput.value.trim(), passwordInput.value.trim(), isAdminLogin ? 'admin' : 'customer');
+        if (result.ok) {
+          setSession(result.user);
+          if (result.user.role === 'admin') {
+            location.href = 'admin/dashboard.html';
+          } else {
+            location.href = 'index.html';
+          }
+        } else {
+          showToast(result.message || 'Login failed.', 'error');
+          loginBtn.textContent = 'Login';
+          loginBtn.disabled = false;
+        }
+      }, 400);
+    });
+  </script>
+</body>
+</html>

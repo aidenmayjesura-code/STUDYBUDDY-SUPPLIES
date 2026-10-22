@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers | StudyBuddy Supplies Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="admin-sidebar"></div>
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1>Customers</h1>
+        <p style="font-size:0.85rem;color:var(--muted);margin-top:4px;">Customer details collected from submitted orders.</p>
+      </header>
+      <div class="admin-content">
+        <div class="stat-grid" style="margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="stat-value" style="--stat-color:var(--lavender);" id="customer-count">0</div>
+            <div class="stat-label">Unique Customers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" style="--stat-color:var(--pink);" id="total-customer-orders">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Address</th>
+                <th>Orders</th>
+                <th>Total Spent</th>
+                <th>Last Order</th>
+              </tr>
+            </thead>
+            <tbody id="customer-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    // Admin login guard
+    if (!isLoggedIn() || !isAdmin()) {
+      location.href = '../login.html';
+    }
+
+    renderAdminSidebar();
+
+    function renderCustomers() {
+      const customers = getCustomers();
+      document.getElementById('customer-count').textContent = customers.length;
+      const totalOrders = customers.reduce((sum, c) => sum + c.orderCount, 0);
+      document.getElementById('total-customer-orders').textContent = totalOrders;
+      const tbody = document.getElementById('customer-table');
+      if (customers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">No customers yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = customers.map(c => {
+        const last = c.orders.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        return `
+          <td><strong>${c.name}</strong></td>
+          <td>${c.contact}</td>
+          <td style="max-width:260px;">${c.address}</td>
+          <td>${c.orderCount}</td>
+          <td><strong>${formatPrice(c.totalSpent)}</strong></td>
+          <td>${last ? formatOrderDate(last.date) : '-'}</td>
+        `;
+      }).join('');
+    }
+
+    renderCustomers();
+  </script>
+</body>
+</html>

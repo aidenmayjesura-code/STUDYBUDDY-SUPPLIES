@@ -1,0 +1,111 @@
+/* StudyBuddy Supplies - Login page styles */
+
+.login-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fde2e8 0%, #f3e8ff 50%, #e0f7fe 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 30px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-hover);
+  text-align: center;
+}
+
+.login-header .logo {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.login-header .logo span {
+  color: var(--pink);
+}
+
+.login-header h2 {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.login-header p {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+}
+
+.login-card .form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.login-card label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-main);
+  font-size: 1rem;
+  background: #fff;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(248, 195, 205, 0.2);
+}
+
+.login-card .error-msg {
+  color: #c94f6b;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  display: none;
+}
+
+.login-toast {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0;
+  display: none;
+  transition: opacity 0.2s;
+}
+
+.login-toast.show {
+  display: block;
+  opacity: 1;
+}
+
+.login-toast.error {
+  background: #fde2e8;
+  color: #c94f6b;
+  border: 1px solid #fcc4cc;
+}
+
+.login-footer {
+  margin-top: 20px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}

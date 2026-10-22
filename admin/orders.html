@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Orders | StudyBuddy Supplies Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="admin-sidebar"></div>
+    <div class="admin-main">
+      <header class="admin-header">
+        <h1>Manage Orders</h1>
+      </header>
+      <div class="admin-content">
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Contact</th>
+                <th>Date</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="order-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/auth.js"></script>
+  <script src="../js/products.js"></script>
+  <script src="../js/orders.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    // Admin login guard
+    if (!isLoggedIn() || !isAdmin()) {
+      location.href = '../login.html';
+    }
+
+    renderAdminSidebar();
+
+    const STATUS_ORDER = ['Pending', 'Confirmed', 'Preparing', 'Ready for Pickup', 'Completed', 'Cancelled'];
+
+    function renderOrders() {
+      const orders = getOrders();
+      const tbody = document.getElementById('order-table');
+      if (orders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">No orders yet.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = orders.map(o => {
+        const itemsSummary = o.items.map(i => `${i.name} x${i.qty}`).join(', ');
+        return `
+          <tr>
+            <td><strong>#${o.number}</strong><br><small style="color:var(--muted);">${formatOrderDate(o.date)}</small></td>
+            <td>${o.customer ? o.customer.name : 'Unknown'}</td>
+            <td>${o.customer ? o.customer.contact : '-'}</td>
+            <td>${formatOrderDate(o.date)}</td>
+            <td style="max-width:260px;">${itemsSummary}</td>
+            <td><strong>${formatPrice(o.total)}</strong></td>
+            <td><span class="status-badge status-${o.status.replace(/\s+/g,'-')}">${o.status}</span></td>
+            <td>
+              <select class="status-select" id="status-${o.number}" onchange="changeStatus('${o.number}', this.value)">
+                ${STATUS_ORDER.map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+              <br>
+              <button class="btn-action btn-view" style="margin-top:6px;padding:6px 10px;" onclick="viewOrder('${o.number}')">View Details</button>
+              ${o.status !== 'Cancelled' ? `<button class="btn-action btn-delete" style="margin-top:4px;padding:4px 8px;font-size:0.8rem;" onclick="cancelOrderUI('${o.number}')">Cancel</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.changeStatus = function(orderNumber, newStatus) {
+      try {
+        updateOrderStatus(orderNumber, newStatus);
+        toast(`Order #${orderNumber.slice(-6)} set to ${newStatus}.`, 'success');
+        renderOrders();
+      } catch (e) {
+        toast(e.message, 'error');
+        renderOrders(); // reset select
+      }
+    };
+
+    window.cancelOrderUI = function(orderNumber) {
+      const order = getOrder(orderNumber);
+      if (!order) return;
+      if (!confirm(`Cancel order #${order.number}?\nCustomer: ${order.customer ? order.customer.name : 'Unknown'}\nStock will be restored.`)) return;
+      try {
+        updateOrderStatus(orderNumber, 'Cancelled');
+        toast('Order cancelled. Stock restored.', 'success');
+        renderOrders();
+      } catch (e) {
+        toast(e.message, 'error');
+        renderOrders();
+      }
+    };
+
+    window.viewOrder = function(orderNumber) {
+      const order = getOrder(orderNumber);
+      if (!order) return;
+      const itemsHtml = order.items.map(i => `<li>${i.name} x${i.qty} — ${formatPrice(i.subtotal)}</li>`).join('');
+      alert(
+        'Order #'+order.number+'\n'+
+        'Date: '+formatOrderDate(order.date)+'\n'+
+        'Customer: '+(order.customer?order.customer.name:'Unknown')+'\n'+
+        'Contact: '+(order.customer?order.customer.contact:'-')+'\n'+
+        'Address: '+(order.customer?order.customer.address:'-')+'\n'+
+        'Notes: '+(order.customer?order.customer.notes:'-')+'\n'+
+        'Items:\n- '+itemsHtml+'\n'+
+        'Total: '+formatPrice(order.total)+'\n'+
+        'Status: '+order.status
+      );
+    };
+
+    renderOrders();
+  </script>
+</body>
+</html>
