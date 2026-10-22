@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation | StudyBuddy Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <section class="section">
+    <div class="container">
+      <div class="confirmation">
+        <div class="badge">&#10003; Order Placed</div>
+        <h2>Thank you for your order!</h2>
+        <p>Your order has been received and is being processed.</p>
+        <div class="order-number" id="order-number">Order #---</div>
+        <p id="order-status">Status: Pending</p>
+        <p style="margin-top:18px;color:var(--muted);font-size:0.9rem;">
+          This is a frontend demo. Your order is saved in your browser only and is not sent to a real store.
+        </p>
+        <div style="margin-top:26px;">
+          <a href="orders.html" class="btn btn-outline">View My Orders</a>
+          <a href="index.html" class="btn btn-outline" style="margin-left:10px;">Continue Shopping</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="site-footer"></div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Redirect to login if not logged in
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+    }
+
+    renderHeader();
+    renderFooter();
+    initMobileMenu();
+    updateCartBadge();
+
+    const order = JSON.parse(localStorage.getItem('studyBuddy_lastOrder') || 'null');
+    if (order) {
+      document.getElementById('order-number').textContent = 'Order #' + order.number;
+      document.getElementById('order-status').textContent = 'Status: ' + order.status;
+    }
+  </script>
+</body>
+</html>

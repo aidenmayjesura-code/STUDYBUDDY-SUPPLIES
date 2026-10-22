@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyBuddy Supplies | Cute School Supplies Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Hello, student! <br>Welcome to <span style="color:var(--pink)">StudyBuddy Supplies</span></h1>
+      <p>Your one-stop shop for cute and affordable school supplies. Everything you need for a productive school year.</p>
+      <a href="shop.html" class="btn btn-primary">Shop Now</a>
+      <div class="hero-image">
+        <img src="https://placehold.co/900x400/fde2e8/5b4b6a?text=School+Supplies" alt="School supplies flat lay" style="width:100%;max-width:860px;border-radius:24px;">
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="categories" style="background:#f3e8ff;">
+    <div class="container">
+      <h2 class="section-title">Shop by Category</h2>
+      <p class="section-subtitle">Find exactly what you need</p>
+      <div class="category-filters" id="category-list"></div>
+    </div>
+  </section>
+
+  <div id="site-footer"></div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Redirect to login if not logged in
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+    }
+
+    renderHeader();
+    renderFooter();
+    initMobileMenu();
+    updateCartBadge();
+
+    const categoryList = document.getElementById('category-list');
+    categoryList.innerHTML = CATEGORIES.map(c => `
+      <a href="shop.html?cat=${c.id}" class="filter-btn">${c.name}</a>
+    `).join('');
+  </script>
+</body>
+</html>

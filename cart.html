@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Cart | StudyBuddy Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">My Cart</h2>
+
+      <div id="cart-empty" class="empty-state" style="display:none;">
+        <p>Your cart is empty.</p>
+        <a href="shop.html" class="btn btn-primary">Start Shopping</a>
+      </div>
+
+      <div id="cart-items"></div>
+
+      <div class="cart-summary">
+        <div class="cart-total-row">
+          <span>Total</span>
+          <span id="cart-total">₱0.00</span>
+        </div>
+        <a href="checkout.html" class="btn btn-primary checkout-btn" id="checkout-btn">Proceed to Checkout</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="site-footer"></div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Redirect to login if not logged in
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+    }
+
+    renderHeader();
+    renderFooter();
+    initMobileMenu();
+    updateCartBadge();
+
+    const cartItemsEl = document.getElementById('cart-items');
+    const cartEmptyEl = document.getElementById('cart-empty');
+    const cartTotalEl = document.getElementById('cart-total');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    function renderCart() {
+      const items = getCartItems();
+      if (items.length === 0) {
+        cartEmptyEl.style.display = 'block';
+        cartItemsEl.innerHTML = '';
+        cartTotalEl.textContent = formatPrice(0);
+        checkoutBtn.disabled = true;
+        checkoutBtn.style.opacity = '0.5';
+        return;
+      }
+      cartEmptyEl.style.display = 'none';
+      checkoutBtn.disabled = false;
+      checkoutBtn.style.opacity = '1';
+
+      cartTotalEl.textContent = formatPrice(getTotal());
+
+      cartItemsEl.innerHTML = items.map(item => `
+        <div class="cart-item">
+          <img src="${resolveImagePath(item.product.image)}" alt="${item.product.name}"
+            onerror="this.onerror=null;this.src='https://placehold.co/400x400/fde2e8/5b4b6a?text=${encodeURIComponent(item.product.name)}'"
+            width="70" height="70">
+          <div>
+            <div class="cart-item-name">${item.product.name}</div>
+            ${item.color || item.size ? `<div class="cart-item-variant" style="font-size:0.8rem;color:var(--muted);margin-top:2px;">${item.color ? 'Color: '+item.color : ''}${item.color && item.size ? ' • ' : ''}${item.size ? 'Size: '+item.size : ''}</div>` : ''}
+            <div class="cart-item-price">${formatPrice(item.unitPrice)} each</div>
+          </div>
+          <div class="cart-item-qty">
+            <button type="button" onclick="updateCartQty('${item.id}', ${JSON.stringify(item.color)}, ${JSON.stringify(item.size)}, ${item.qty - 1})">&#8722;</button>
+            <input type="number" id="cart-qty-${item.id}-${item.color||'-'}-${item.size||'-'}" value="${item.qty}" min="0" max="${item.product.stock}"
+              onchange="updateCartQtyInput('${item.id}', ${JSON.stringify(item.color)}, ${JSON.stringify(item.size)}, this.value)">
+            <button type="button" onclick="updateCartQty('${item.id}', ${JSON.stringify(item.color)}, ${JSON.stringify(item.size)}, ${item.qty + 1})">&#43;</button>
+          </div>
+          <button class="remove-btn" onclick="removeFromCartUI('${item.id}', ${JSON.stringify(item.color)}, ${JSON.stringify(item.size)})">&times;</button>
+          <div class="cart-item-subtotal">${formatPrice(item.subtotal)}</div>
+        </div>
+      `).join('');
+    }
+
+    window.updateCartQty = function(id, color, size, qty) {
+      setQty(id, color, size, qty);
+      renderCart();
+    };
+
+    window.updateCartQtyInput = function(id, color, size, val) {
+      setQty(id, color, size, parseInt(val) || 0);
+      renderCart();
+    };
+
+    window.removeFromCartUI = function(id, color, size) {
+      removeItem(id, color, size);
+      renderCart();
+    };
+
+    onCartUpdated(() => {
+      updateCartBadge();
+      renderCart();
+    });
+
+    renderCart();
+  </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout | StudyBuddy Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Place Your Order</h2>
+      <p class="section-subtitle">Fill in your details to complete your purchase</p>
+
+      <div class="checkout-grid">
+        <form class="order-form" id="checkout-form" novalidate>
+          <div class="form-group">
+            <label for="name">Customer Name <span style="color:#c94f6b;">*</span></label>
+            <input type="text" id="name" name="name" placeholder="Juan Dela Cruz" required>
+            <small class="error-msg" id="name-error">Please enter your name.</small>
+          </div>
+          <div class="form-group">
+            <label for="contact">Contact Number <span style="color:#c94f6b;">*</span></label>
+            <input type="tel" id="contact" name="contact" placeholder="+63 912 345 6789" required>
+            <small class="error-msg" id="contact-error">Please enter a valid contact number.</small>
+          </div>
+          <div class="form-group">
+            <label for="address">Delivery Address <span style="color:#c94f6b;">*</span></label>
+            <textarea id="address" name="address" rows="3" placeholder="123 School St., Brgy. Example, Manila" required></textarea>
+            <small class="error-msg" id="address-error">Please enter your delivery address.</small>
+          </div>
+          <div class="form-group">
+            <label for="notes">Order Notes (optional)</label>
+            <textarea id="notes" name="notes" rows="2" placeholder="e.g. Leave at the guard..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:10px;">Place Order</button>
+        </form>
+
+        <div class="order-summary-card">
+          <h3>Order Summary</h3>
+          <div id="summary-items"></div>
+          <div class="summary-total">
+            <span>Total</span>
+            <span id="summary-total">₱0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="site-footer"></div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/orders.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Redirect to login if not logged in
+    if (!isLoggedIn()) {
+      location.href = 'login.html';
+    }
+
+    renderHeader();
+    renderFooter();
+    initMobileMenu();
+    updateCartBadge();
+
+    const form = document.getElementById('checkout-form');
+    const summaryItems = document.getElementById('summary-items');
+    const summaryTotal = document.getElementById('summary-total');
+
+    function renderSummary() {
+      const items = getCartItems();
+      if (items.length === 0) {
+        location.href = 'cart.html';
+        return;
+      }
+      summaryItems.innerHTML = items.map(item => `
+        <div class="summary-item">
+          <span class="name">${item.product.name} x${item.qty}${item.color || item.size ? ' ('+(item.color?item.color:'')+(item.color&&item.size?' • ':'')+(item.size?item.size:'')+')' : ''}</span>
+          <span>${formatPrice(item.subtotal)}</span>
+        </div>
+      `).join('');
+      summaryTotal.textContent = formatPrice(getTotal());
+    }
+
+    function showError(id, show) {
+      const el = document.getElementById(id);
+      const input = document.getElementById(id.replace('-error', ''));
+      el.style.display = show ? 'block' : 'none';
+      if (input) input.style.borderColor = show ? '#c94f6b' : '';
+    }
+
+    function validate() {
+      let valid = true;
+      ['name', 'contact', 'address'].forEach(field => {
+        const el = document.getElementById(field);
+        if (!el.value.trim()) {
+          showError(field + '-error', true);
+          valid = false;
+        } else {
+          showError(field + '-error', false);
+        }
+      });
+      return valid;
+    }
+
+    let submitting = false;
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (submitting) return;
+      if (!validate()) return;
+
+      const items = getCartItems();
+      if (items.length === 0) {
+        alert('Your cart is empty.');
+        return;
+      }
+      const customerInfo = {
+        name: document.getElementById('name').value.trim(),
+        contact: document.getElementById('contact').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        notes: document.getElementById('notes').value.trim()
+      };
+
+      submitting = true;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'Placing Order...';
+      submitBtn.disabled = true;
+
+      try {
+        const order = placeOrder(customerInfo, items, getTotal());
+        localStorage.setItem('studyBuddy_lastOrder', JSON.stringify(order));
+        clearCart();
+        location.href = 'confirmation.html';
+      } catch (e) {
+        alert(e.message);
+        submitting = false;
+        submitBtn.textContent = 'Place Order';
+        submitBtn.disabled = false;
+      }
+    });
+    renderSummary();
+  </script>
+</body>
+</html>
