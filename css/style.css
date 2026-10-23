@@ -131,8 +131,9 @@ img {
 
 /* Header */
 .site-header {
-  background: #fff;
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #FFF0F5 0%, #F3E8FF 100%);
+  border-bottom: 2px solid #F8BBD0;
+  box-shadow: 0 4px 14px rgba(244, 143, 177, 0.15);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -154,7 +155,14 @@ img {
   color: var(--text-dark);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.logo-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .logo span {
@@ -168,18 +176,30 @@ img {
 
 .main-nav a {
   font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text);
-  transition: color 0.2s;
+  font-weight: 600;
+  color: #49345F;
+  background: #F3E8FF;
+  padding: 8px 16px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(244, 143, 177, 0.12);
 }
 
 .main-nav a:hover {
-  color: var(--pink);
+  transform: translateY(-2px);
+  background: #DCCBFF;
+  box-shadow: 0 6px 14px rgba(244, 143, 177, 0.22);
 }
 
 .main-nav a.active {
-  color: var(--pink);
-  font-weight: 600;
+  background: #F8A8CC;
+  color: #fff;
+}
+
+.main-nav a[href="login.html"],
+.main-nav .logout-link {
+  background: linear-gradient(135deg, #F48FB1 0%, #F8BBD0 100%);
+  color: #fff;
 }
 
 .cart-link {
@@ -1015,4 +1035,87 @@ img {
 .shop-actions .order-now:hover {
   background: linear-gradient(135deg, #f7a6b8, #e07aa8);
   box-shadow: 0 6px 14px rgba(233, 155, 189, 0.5);
+}
+
+.floating-cart {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #F48FB1 0%, #DCCBFF 100%);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(244, 143, 177, 0.35);
+  cursor: pointer;
+  z-index: 1000;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.floating-cart:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 24px rgba(244, 143, 177, 0.45);
+}
+
+.floating-cart svg {
+  width: 26px;
+  height: 26px;
+}
+
+.floating-cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #fff;
+  color: #F48FB1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 2px solid #F48FB1;
+}
+h1, h2, h3, .logo, .section-title {
+  font-family: 'Fredoka', 'Quicksand', sans-serif;
+}
+
+.btn, .filter-btn {
+  border-radius: 999px;
+  font-family: 'Quicksand', 'Segoe UI', sans-serif;
+  font-weight: 600;
+  box-shadow: 0 8px 18px rgba(244, 143, 177, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.btn:hover, .filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(244, 143, 177, 0.3);
+}
+
+.btn:active, .filter-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(244, 143, 177, 0.2);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #F48FB1 0%, #F8BBD0 100%);
+  color: #fff;
+}
+
+.filter-btn {
+  background: #F3E8FF;
+  color: #49345F;
+}
+
+.product-card, .about-card, .login-card {
+  border-radius: 20px;
+  border: 1px solid #F8BBD0;
 }

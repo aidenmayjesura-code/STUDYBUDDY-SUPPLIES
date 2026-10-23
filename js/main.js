@@ -2,6 +2,9 @@
 
 // Navigation links for logged-out state (only login)
 const NAV_LINKS_LOGGED_OUT = [
+  { href: 'index.html', label: 'Home' },
+  { href: 'about.html', label: 'About Us' },
+  { href: 'shop.html', label: 'Products' },
   { href: 'login.html', label: 'Login' }
 ];
 
@@ -10,7 +13,7 @@ const NAV_LINKS_CUSTOMER = [
   { href: 'index.html', label: 'Home' },
   { href: 'shop.html', label: 'Shop' },
   { href: 'shop.html', label: 'Categories' },
-  { href: 'cart.html', label: 'My Cart' },
+  { href: 'about.html', label: 'About Us' },
   { href: 'orders.html', label: 'My Orders' }
 ];
 
@@ -50,7 +53,7 @@ function renderHeader() {
   header.innerHTML = `
     <header class="site-header">
       <div class="header-inner">
-        <a href="${user && user.role === 'admin' ? 'admin/dashboard.html' : 'index.html'}" class="logo">StudyBuddy<span>Supplies</span></a>
+        <a href="${user && user.role === 'admin' ? 'admin/dashboard.html' : 'index.html'}" class="logo"><img src="images/studybuddy-logo.png.png" alt="StudyBuddy Supplies logo" class="logo-img">StudyBuddy<span>Supplies</span></a>
         <nav class="main-nav">
           <ul>
             ${links.map(link => `
@@ -65,6 +68,13 @@ function renderHeader() {
         <button class="nav-toggle" aria-label="Toggle menu">&#9776;</button>
       </div>
     </header>
+
+    <button class="floating-cart" aria-label="Open shopping cart" onclick="location.href='cart.html'">
+      <svg class="cart-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#fff" d="M6 2c-1.1 0-1.99.9-1.99 2L4 4c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H6zm0 2c1.1 0 2 .9 2 2v1h6c1.1 0 2 .9 2 2s-.9 2-2 2H8c-1.1 0-2-.9-2-2s.9-2 2-2v-1c0-1.1.9-2 2-2zm7 7c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM4 6h2c1.1 0 2 .9 2 2s-.9 2-2 2H4c-1.1 0-2-.9-2-2s.9-2 2-2zm16 10c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2z"/>
+      </svg>
+      <span class="floating-cart-badge" id="floating-cart-badge">0</span>
+    </button>
   `;
 }
 
@@ -99,11 +109,17 @@ function renderFooter() {
 }
 
 function updateCartBadge() {
-  const badge = document.getElementById('cart-badge');
-  if (!badge) return;
   const count = typeof getItemCount === 'function' ? getItemCount() : 0;
-  badge.textContent = count;
-  badge.style.display = count > 0 ? 'inline-block' : 'none';
+  const navBadge = document.getElementById('cart-badge');
+  const floatBadge = document.getElementById('floating-cart-badge');
+  if (navBadge) {
+    navBadge.textContent = count;
+    navBadge.style.display = count > 0 ? 'inline-block' : 'none';
+  }
+  if (floatBadge) {
+    floatBadge.textContent = count;
+    floatBadge.style.display = count > 0 ? 'flex' : 'none';
+  }
 }
 
 function initMobileMenu() {

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up | StudyBuddy Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo">StudyBuddy<span>Supplies</span></div>
+        <h2 id="signup-title">Create Account</h2>
+        <p id="signup-subtitle">Join StudyBuddy Supplies today.</p>
+      </div>
+
+      <form id="signup-form" novalidate>
+        <div class="form-group">
+          <label for="signup-fullname">Full Name <span style="color:#c94f6b;">*</span></label>
+          <input type="text" id="signup-fullname" name="fullName" placeholder="Juan Dela Cruz" required>
+          <small class="error-msg" id="fullname-error">Please enter your full name.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="signup-email">Email Address <span style="color:#c94f6b;">*</span></label>
+          <input type="email" id="signup-email" name="email" placeholder="you@example.com" required>
+          <small class="error-msg" id="signup-email-error">Please enter a valid email address.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="signup-password">Password <span style="color:#c94f6b;">*</span></label>
+          <div class="password-input">
+            <input type="password" id="signup-password" name="password" placeholder="Create a password" required>
+            <button type="button" class="toggle-password" id="toggle-signup-password" aria-label="Show password">&#128065;</button>
+          </div>
+          <small class="error-msg" id="signup-password-error">Password must be at least 6 characters.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="signup-confirm-password">Confirm Password <span style="color:#c94f6b;">*</span></label>
+          <div class="password-input">
+            <input type="password" id="signup-confirm-password" name="confirmPassword" placeholder="Confirm your password" required>
+            <button type="button" class="toggle-password" id="toggle-confirm-password" aria-label="Show password">&#128065;</button>
+          </div>
+          <small class="error-msg" id="signup-confirm-error">Passwords do not match.</small>
+        </div>
+
+        <div class="form-group terms">
+          <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:500; color:var(--text-dark); font-size:0.95rem; line-height:1.4;">
+            <input type="checkbox" id="terms-checkbox" required style="margin-top:2px;">
+            <span>I agree to the <a href="#" style="color:var(--pink); text-decoration:underline;">Terms and Conditions</a> and <a href="#" style="color:var(--pink); text-decoration:underline;">Privacy Policy</a>.</span>
+          </label>
+          <small class="error-msg" id="terms-error">You must agree to the terms to continue.</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="signup-btn" style="width:100%; margin-top:10px;">Create Account</button>
+      </form>
+
+      <div id="signup-toast" class="login-toast"></div>
+
+      <div class="login-footer">
+        <p style="margin-bottom:12px;">Already have an account? <a href="login.html" style="color:var(--pink); font-weight:600; text-decoration:underline;">Sign In</a></p>
+        <p style="font-size:0.8rem; color:var(--muted);">Frontend demo — accounts saved in browser only.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    const form = document.getElementById('signup-form');
+    const fullnameInput = document.getElementById('signup-fullname');
+    const emailInput = document.getElementById('signup-email');
+    const passwordInput = document.getElementById('signup-password');
+    const confirmPasswordInput = document.getElementById('signup-confirm-password');
+    const termsCheckbox = document.getElementById('terms-checkbox');
+    const toggleBtn = document.getElementById('toggle-signup-password');
+    const toggleConfirmBtn = document.getElementById('toggle-confirm-password');
+    const signupBtn = document.getElementById('signup-btn');
+    const signupToast = document.getElementById('signup-toast');
+
+    // Already logged in? Redirect to home.
+    if (typeof isLoggedIn === 'function' && isLoggedIn()) {
+      location.href = 'index.html';
+    }
+
+    // Toggle password visibility for both fields
+    toggleBtn.addEventListener('click', function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      this.textContent = type === 'password' ? '&#128065;' : '&#128066;';
+      this.setAttribute('aria-label', type === 'password' ? 'Show password' : 'Hide password');
+    });
+
+    toggleConfirmBtn.addEventListener('click', function() {
+      const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      confirmPasswordInput.setAttribute('type', type);
+      this.textContent = type === 'password' ? '&#128065;' : '&#128066;';
+      this.setAttribute('aria-label', type === 'password' ? 'Show password' : 'Hide password');
+    });
+
+    function showToast(message, type = 'error') {
+      signupToast.textContent = message;
+      signupToast.className = 'login-toast show ' + type;
+      setTimeout(() => { signupToast.classList.remove('show'); }, 3500);
+    }
+
+    function showError(id, show) {
+      const el = document.getElementById(id);
+      const input = document.getElementById(id.replace('-error', ''));
+      if (!el) return;
+      el.style.display = show ? 'block' : 'none';
+      if (input) input.style.borderColor = show ? '#c94f6b' : '';
+    }
+
+    function validate() {
+      let valid = true;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!fullnameInput.value.trim()) {
+        showError('fullname-error', true);
+        valid = false;
+      } else {
+        showError('fullname-error', false);
+      }
+
+      if (!emailInput.value.trim()) {
+        showError('signup-email-error', true);
+        valid = false;
+      } else if (!emailRegex.test(emailInput.value.trim())) {
+        showError('signup-email-error', true);
+        signupToast.textContent = '';
+        signupToast.className = 'login-toast show error';
+        signupToast.textContent = 'Please enter a valid email address.';
+        signupToast.style.display = 'block';
+        setTimeout(() => { signupToast.classList.remove('show'); }, 3500);
+        valid = false;
+      } else {
+        showError('signup-email-error', false);
+      }
+
+      if (!passwordInput.value.trim() || passwordInput.value.trim().length < 6) {
+        showError('signup-password-error', true);
+        valid = false;
+      } else {
+        showError('signup-password-error', false);
+      }
+
+      if (confirmPasswordInput.value.trim() !== passwordInput.value.trim()) {
+        showError('signup-confirm-error', true);
+        valid = false;
+      } else {
+        showError('signup-confirm-error', false);
+      }
+
+      if (!termsCheckbox.checked) {
+        showError('terms-error', true);
+        valid = false;
+      } else {
+        showError('terms-error', false);
+      }
+
+      return valid;
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!validate()) return;
+
+      signupBtn.textContent = 'Creating account...';
+      signupBtn.disabled = true;
+
+      setTimeout(() => {
+        const result = signup(fullnameInput.value.trim(), emailInput.value.trim(), passwordInput.value.trim());
+        if (result.ok) {
+          setSession(result.user);
+          showToast('Account created! Welcome, ' + result.user.name + '.', 'success');
+          setTimeout(() => {
+            location.href = 'index.html';
+          }, 800);
+        } else {
+          showToast(result.message || 'Sign up failed.', 'error');
+          signupBtn.textContent = 'Create Account';
+          signupBtn.disabled = false;
+        }
+      }, 400);
+    });
+  </script>
+</body>
+</html>
